@@ -1,25 +1,23 @@
-module Types where
+module Types (ApplicationState(..), Sort(..), Resource, Tick, SortValue(..), QsTree(..)) where
 
-newtype ApplicationState =
+data ApplicationState =
   State {
-      all :: QuickSort
+      sorts :: [Sort]
   }
+
+data Sort = Sort {
+      current  :: [SortValue],
+      rest     :: [[SortValue]],
+      finished :: Bool
+}
 
 type Resource = ()
 type Tick = ()
-
-data SortData a = SortData {
-    order :: a -> [SortValue],
-    sortData :: a,
-    done :: Bool
-    }
 
 data SortValue = SortValue {
     value :: Int,
     highlight :: Maybe String
     }
 
-data QsData a = Leaf [a] | Reduced Bool (QsData a) a (QsData a)
+data QsTree a = Unreduced [a] | Reduced Bool (QsTree a) a (QsTree a)
   deriving Show
-
-type QuickSort = SortData (QsData Int)

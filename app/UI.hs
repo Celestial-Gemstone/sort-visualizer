@@ -1,12 +1,11 @@
 module UI (draw) where
 
-import Types (ApplicationState (State), SortValue (..), SortData (..))
+import Types (SortValue (..), ApplicationState (sorts), Sort (current))
 import Brick
 import Brick.Widgets.Center
 
 draw :: ApplicationState -> [Widget ()]
-draw st = [ center $ bars (barsData st) ]
-  where barsData (State x) = order x (sortData x)
+draw st = [ vBox $ map (bars . current) (sorts st) ]
 
 bars :: [SortValue] -> Widget ()
 bars = hBox . map (\x -> bar (highlight x) (value x))

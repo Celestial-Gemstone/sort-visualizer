@@ -3,32 +3,50 @@ module Main (main) where
 import Control.Concurrent
 
 import Graphics.Vty
+import Graphics.Vty.CrossPlatform
 import Brick.BChan (newBChan, BChan, writeBChan)
 
-import Algorithms (qsData, quicksort)
 import Types
 import UI (draw)
 import Control (handleEvent)
 import Brick (App (..), showFirstCursor, attrMap, attrName, fg, AttrName, customMain)
-
-sort :: ApplicationState -> ApplicationState
-sort (State st) = State $ quicksort (sortData st)
+import System.Random (randomRIO)
+import Control.Monad
+import Algorithms.Quicksort (quicksort)
+import Algorithms.SelectionSort (selectionsort)
+import Algorithms.MergeSort (mergesort)
 
 application :: App ApplicationState Tick Resource
 application =
   App { appDraw = draw
       , appChooseCursor = showFirstCursor
-      , appHandleEvent  = handleEvent sort
+      , appHandleEvent  = handleEvent onTick
       , appStartEvent   = pure ()
       , appAttrMap = const (attrMap defAttr colors)
       }
 
+onTick :: ApplicationState -> ApplicationState
+onTick st' = State $ map foo (sorts st')
+  where foo st | finished st = st
+               | []       <- rest st = st { finished = True }
+               | (x : xs) <- rest st = st { current = x, rest = xs }
+
 colors :: [(AttrName, Attr)]
 colors = [(attrName label, fg color)
-    | (label, color) <- [("pivot", red), ("highlight", blue)]]
+    | (label, color) <- [("pivot", blue), ("highlight", green)]]
 
-initialState :: ApplicationState
-initialState = State qsData
+initialState :: IO ApplicationState
+initialState = do
+  rand <- randoms 50 100
+  let sorts' = [mergesort, quicksort, selectionsort]
+  pure $ State $ map (initSort . ($ rand)) sorts'
+
+initSort :: [[SortValue]] -> Sort
+initSort [] = error "empty sort"
+initSort (x : xs) = Sort x xs False
+
+randoms :: Int -> Int -> IO [Int]
+randoms n m = replicateM m (randomRIO (1, n))
 
 main :: IO ()
 main = do
@@ -38,11 +56,12 @@ main = do
   print x
   let buildVty = mkVty defaultConfig
   initialVty <- buildVty
-  _ <- customMain initialVty buildVty (Just eventChan) app initialState
+  st <- initialState
+  _ <- customMain initialVty buildVty (Just eventChan) app st
   pure ()
 
 tickThread :: BChan Tick -> IO ()
 tickThread chan = do
   writeBChan chan ()
-  threadDelay 30000
+  threadDelay 25000
   tickThread chan
