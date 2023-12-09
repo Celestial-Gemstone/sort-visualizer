@@ -19,6 +19,7 @@ buildHelp st = let keymap = getKeymap st
   in map (\(key, desc, _) -> makeHelp (showKey key) desc) keymap
 
 showKey :: Key -> String
+showKey (KChar ' ') = "Space"
 showKey (KChar c) = [c]
 showKey KRight = "→"
 showKey KLeft  = "←"

@@ -10,7 +10,6 @@ import ListZipper (right, left, ListZipper (ListZipper), pointer)
 import Lens.Micro ((^.))
 import Control.Monad (unless)
 import Data.Foldable (traverse_)
-import Data.Bits (Bits(xor))
 import Lens.Micro.Extras (view)
 import Algorithms.Quicksort (quicksort)
 import Data.List.NonEmpty (NonEmpty ((:|)))
@@ -48,20 +47,23 @@ apply _        = done .= True
 getKeymap :: ApplicationState -> [(Key, String, EventM Resource ApplicationState ())]
 getKeymap st =
   [ (KEsc, "Quit", halt)
-  , (KChar 'p', pauseDesc, paused %= not)
-  , (KChar 'q', "Quicksort", startqs quicksort)
-  , (KChar 'm', "Mergesort", startqs mergesort)
-  , (KChar 's', "Shuffle", startqs (shuffleList (view randGen st)))
+  ] ++ conditional (not isDone)
+  [ (KChar ' ', pauseDesc, paused %= not)
   ] ++ conditional isPaused
   [ (KRight, "forward", move right)
   , (KLeft, "backward", move left)
+  ] ++ conditional (isPaused || isDone)
+  [ (KChar 'q', "Quicksort", startAlgorithm quicksort)
+  , (KChar 'm', "Mergesort", startAlgorithm mergesort)
+  , (KChar 's', "Shuffle", startAlgorithm (shuffleList (view randGen st)))
   ]
   where isPaused = st ^. paused
+        isDone = st ^. done
         pauseDesc | isPaused  = "Unpause"
                   | otherwise = "Pause"
 
-startqs :: ([Int] -> NonEmpty [SortValue]) -> EventM Resource ApplicationState ()
-startqs f = do
+startAlgorithm :: ([Int] -> NonEmpty [SortValue]) -> EventM Resource ApplicationState ()
+startAlgorithm f = do
   done   .= False
   paused .= False
   sort.values %= useAlgorithm f

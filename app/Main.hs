@@ -31,6 +31,7 @@ colors = [(attrName label, fg color)
 initialState :: IO ApplicationState
 initialState = State test True False <$> initStdGen
 
+test :: Sort
 test = let (x :| xs) = mergesort [1..150]
   in Sort $ ListZipper [] x xs
 
@@ -38,7 +39,7 @@ main :: IO ()
 main = do
   let app = application
   eventChan <- newBChan 1
-  x <- forkIO (tickThread 10 eventChan)
+  x <- forkIO (tickThread 15 eventChan)
   print x
   let buildVty = mkVty defaultConfig
   initialVty <- buildVty
