@@ -2,9 +2,11 @@ module Algorithms.SelectionSort (selectionsort) where
 
 import Types
 import Data.List (delete)
+import Data.List.NonEmpty (NonEmpty (..))
 
-selectionsort :: [Int] -> [[SortValue]]
-selectionsort xs = iterateSelSort (SelSortData xs [])
+selectionsort :: [Int] -> NonEmpty [SortValue]
+selectionsort xs = let d = SelSortData xs []
+  in collect d :| iterateSelSort (selSort d)
 
 iterateSelSort :: SelSortData -> [[SortValue]]
 iterateSelSort l@(SelSortData [] _) = [collect l]

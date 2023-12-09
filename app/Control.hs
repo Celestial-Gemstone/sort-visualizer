@@ -15,6 +15,8 @@ import Algorithms.Quicksort (quicksort)
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Algorithms.Shuffle (shuffleList)
 import Algorithms.MergeSort (mergesort)
+import Algorithms.SelectionSort (selectionsort)
+import Algorithms.Bogosort (bogosort)
 
 handleEvent :: BrickEvent Resource Tick -> EventM Resource ApplicationState ()
 handleEvent ev
@@ -43,7 +45,6 @@ apply :: Maybe (ListZipper [SortValue]) -> EventM Resource ApplicationState ()
 apply (Just z) = sort.values .= z
 apply _        = done .= True
 
--- TODO
 getKeymap :: ApplicationState -> [(Key, String, EventM Resource ApplicationState ())]
 getKeymap st =
   [ (KEsc, "Quit", halt)
@@ -55,6 +56,8 @@ getKeymap st =
   ] ++ conditional (isPaused || isDone)
   [ (KChar 'q', "Quicksort", startAlgorithm quicksort)
   , (KChar 'm', "Mergesort", startAlgorithm mergesort)
+  , (KChar 'c', "Selectionsort", startAlgorithm selectionsort)
+  , (KChar 'b', "Bogosort", startAlgorithm bogosort)
   , (KChar 's', "Shuffle", startAlgorithm (shuffleList (view randGen st)))
   ]
   where isPaused = st ^. paused
