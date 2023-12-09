@@ -14,6 +14,8 @@ import Data.Bits (Bits(xor))
 import Lens.Micro.Extras (view)
 import Algorithms.Quicksort (quicksort)
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import Algorithms.Shuffle (shuffleList)
+import Algorithms.MergeSort (mergesort)
 
 handleEvent :: BrickEvent Resource Tick -> EventM Resource ApplicationState ()
 handleEvent ev
@@ -48,6 +50,8 @@ getKeymap st =
   [ (KEsc, "Quit", halt)
   , (KChar 'p', pauseDesc, paused %= not)
   , (KChar 'q', "Quicksort", startqs quicksort)
+  , (KChar 'm', "Mergesort", startqs mergesort)
+  , (KChar 's', "Shuffle", startqs (shuffleList (view randGen st)))
   ] ++ conditional isPaused
   [ (KRight, "forward", move right)
   , (KLeft, "backward", move left)
@@ -59,7 +63,7 @@ getKeymap st =
 startqs :: ([Int] -> NonEmpty [SortValue]) -> EventM Resource ApplicationState ()
 startqs f = do
   done   .= False
-  paused .= True
+  paused .= False
   sort.values %= useAlgorithm f
 
 useAlgorithm :: ([Int] -> NonEmpty [SortValue]) -> ListZipper [SortValue] -> ListZipper [SortValue]

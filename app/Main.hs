@@ -9,9 +9,11 @@ import Brick.BChan (newBChan, BChan, writeBChan)
 import Types
 import UI (draw)
 import Control (handleEvent)
-import Brick (App (..), showFirstCursor, attrMap, attrName, fg, AttrName, customMain, EventM)
+import Brick (App (..), showFirstCursor, attrMap, attrName, fg, AttrName, customMain)
 import System.Random (initStdGen)
 import ListZipper (ListZipper(ListZipper))
+import Data.List.NonEmpty (NonEmpty((:|)))
+import Algorithms.MergeSort (mergesort)
 
 application :: App ApplicationState Tick Resource
 application =
@@ -27,13 +29,16 @@ colors = [(attrName label, fg color)
     | (label, color) <- [("pivot", red), ("highlight", cyan), ("temp", magenta)]]
 
 initialState :: IO ApplicationState
-initialState = State (Sort $ ListZipper [] [SortValue 100 Nothing] []) True False <$> initStdGen
+initialState = State test True False <$> initStdGen
+
+test = let (x :| xs) = mergesort [1..150]
+  in Sort $ ListZipper [] x xs
 
 main :: IO ()
 main = do
   let app = application
   eventChan <- newBChan 1
-  x <- forkIO (tickThread 25 eventChan)
+  x <- forkIO (tickThread 10 eventChan)
   print x
   let buildVty = mkVty defaultConfig
   initialVty <- buildVty

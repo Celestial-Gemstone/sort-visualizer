@@ -9,7 +9,10 @@ import Control (getKeymap)
 import Graphics.Vty (Key (KChar, KRight, KLeft))
 
 draw :: ApplicationState -> [Widget ()]
-draw st = [ center (drawBars st) <=> hBox (padLeftRight 1 . str <$> buildHelp st)]
+draw st = [ center (str (info st)) <=> center (drawBars st) <=> hBox (padLeftRight 1 . str <$> buildHelp st)]
+
+info :: ApplicationState -> [Char]
+info st = "Done: " ++ show (view done st)
 
 buildHelp :: ApplicationState -> [String]
 buildHelp st = let keymap = getKeymap st
@@ -23,7 +26,6 @@ showKey x = tail $ show x
 
 makeHelp :: String -> String -> String
 makeHelp key desc = concat [key, "(", desc, ")"]
-
 
 drawBars :: ApplicationState -> Widget ()
 drawBars = hBox . map drawBarHighlight . pointer . view (sort . values)
