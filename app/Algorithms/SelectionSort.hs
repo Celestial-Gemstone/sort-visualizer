@@ -11,11 +11,11 @@ iterateSelSort l@(SelSortData [] _) = [collect l]
 iterateSelSort l = collect l : iterateSelSort (selSort l)
 
 collect :: SelSortData -> [SortValue]
-collect (SelSortData rs (x : xs)) = values rs Nothing ++ [SortValue x (Just "pivot")] ++ values xs (Just "highlight")
-collect (SelSortData rs []) = values rs Nothing
+collect (SelSortData rs (x : xs)) = collectValues rs Nothing ++ [SortValue x (Just "pivot")] ++ collectValues xs (Just "highlight")
+collect (SelSortData rs []) = collectValues rs Nothing
 
-values :: [Int] -> Maybe String -> [SortValue]
-values xs label = map (`SortValue` label) xs
+collectValues :: [Int] -> Maybe String -> [SortValue]
+collectValues xs label = map (`SortValue` label) xs
 
 selSort :: SelSortData -> SelSortData
 selSort (SelSortData rs sorted) = SelSortData (delete x rs) (x : sorted)

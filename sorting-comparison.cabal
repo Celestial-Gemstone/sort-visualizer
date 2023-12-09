@@ -5,8 +5,16 @@ author:             Jade
 
 executable sorting-comparison
     main-is:          Main.hs
-    other-modules:    Algorithms.SelectionSort, Algorithms.Quicksort, Algorithms.MergeSort, UI, Types, Control
-    build-depends:    random, vty, vty-crossplatform, brick, process, base ^>=4.17
+    other-modules:    ListZipper,
+                      Algorithms.SelectionSort,
+                      Algorithms.Quicksort,
+                      Algorithms.MergeSort,
+                      Algorithms.Shuffle,
+                      Algorithms.Bogosort,
+                      UI,
+                      Types,
+                      Control
+    build-depends:    microlens, microlens-mtl, microlens-th, random, vty, vty-crossplatform, brick, process, base
     ghc-options:      -Wall -threaded
     hs-source-dirs:   app
     default-language: Haskell2010

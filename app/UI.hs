@@ -1,20 +1,41 @@
 module UI (draw) where
 
-import Types (SortValue (..), ApplicationState (sorts), Sort (current))
+import Types
 import Brick
 import Brick.Widgets.Center
+import Lens.Micro.Mtl (view)
+import ListZipper (pointer)
+import Control (getKeymap)
+import Graphics.Vty (Key (KChar, KRight, KLeft))
 
 draw :: ApplicationState -> [Widget ()]
-draw st = [ vBox $ map (bars . current) (sorts st) ]
+draw st = [ center (drawBars st) <=> hBox (padLeftRight 1 . str <$> buildHelp st)]
 
-bars :: [SortValue] -> Widget ()
-bars = hBox . map (\x -> bar (highlight x) (value x))
+buildHelp :: ApplicationState -> [String]
+buildHelp st = let keymap = getKeymap st
+  in map (\(key, desc, _) -> makeHelp (showKey key) desc) keymap
 
-bar :: Maybe String -> Int -> Widget n
-bar mark n
-  | Just highlight' <- mark = withAttr (attrName highlight') bar'
-  | otherwise   = bar'
-  where bar' = padTop Max . vertical $ topBlock (n `rem` 8) : replicate (n `div` 8) '█'
+showKey :: Key -> String
+showKey (KChar c) = [c]
+showKey KRight = "→"
+showKey KLeft  = "←"
+showKey x = tail $ show x
+
+makeHelp :: String -> String -> String
+makeHelp key desc = concat [key, "(", desc, ")"]
+
+
+drawBars :: ApplicationState -> Widget ()
+drawBars = hBox . map drawBarHighlight . pointer . view (sort . values)
+
+drawBarHighlight :: SortValue -> Widget n
+drawBarHighlight val = highlightBar val $ padTop Max (drawBar (view value val))
+
+highlightBar :: SortValue -> Widget n -> Widget n
+highlightBar = maybe id (withAttr . attrName) . view highlight
+
+drawBar :: Int -> Widget n
+drawBar n = vertical $ topBlock (n `rem` 8) : replicate (n `div` 8) '█'
 
 topBlock :: (Eq a, Num a) => a -> Char
 topBlock 0 = ' '

@@ -1,8 +1,12 @@
 module Algorithms.MergeSort (mergesort, ms, MsTree(..)) where
-import Types (SortValue (SortValue), QsTree (Reduced))
+import Types (SortValue (SortValue))
+import Data.List.NonEmpty (NonEmpty ((:|)))
 
-mergesort :: [Int] -> [[SortValue]]
-mergesort = iterateMs . distribute
+data MsTree a = MsReduced [a] | MsUnreduced (MsTree a) [a] (MsTree a) deriving Show
+
+mergesort :: [Int] -> NonEmpty [SortValue]
+mergesort xs = let x = distribute xs
+  in collect x :| iterateMs x
 
 distribute :: [Int] -> MsTree Int
 distribute []  = MsReduced []
@@ -11,27 +15,30 @@ distribute xs  = MsUnreduced (distribute l) [] (distribute r)
   where (l, r) = splitAt (length xs `div` 2) xs
 
 iterateMs :: MsTree Int -> [[SortValue]]
-iterateMs tree = collect tree : iterateMs (ms tree)
+iterateMs tree = rest
+  where (x, changed) = ms tree
+        rest | changed   = collect x : iterateMs x
+             | otherwise = []
 
 collect :: MsTree Int -> [SortValue]
-collect (MsReduced xs) = map (`SortValue` Just "highlight") xs
-collect (MsUnreduced l x r) = collect l ++ map (`SortValue` Just "pivot") x ++ collect r
+collect = fst . collect' (Just "highlight")
 
-merge :: [Int] -> [Int] -> [Int]
-merge xs [] = xs
-merge [] ys = ys
-merge xs'@(x : xs) ys'@(y : ys)
-  | x < y     = x : merge xs ys'
-  | otherwise = y : merge xs' ys
+collect' :: Maybe String -> MsTree Int -> ([SortValue], Bool)
+collect' hl (MsReduced xs) = (map (`SortValue` hl) xs, True)
+collect' hl (MsUnreduced l x r) = (l' ++ map (`SortValue` Just "temp") x ++ r', hldl || hldr)
+  where (l', hldl) = collect' hl l
+        (r', hldr) | hldl = collect' Nothing r
+                   | otherwise = collect' hl r
 
-data MsTree a = MsReduced [a] | MsUnreduced (MsTree a) [a] (MsTree a) deriving Show
-
-ms :: MsTree Int -> MsTree Int
-ms (MsUnreduced (MsReduced l) acc (MsReduced r)) = mergeStep l acc r
-ms (MsUnreduced l'@(MsReduced _) x r') = MsUnreduced l' x (ms r')
-ms (MsUnreduced l' x r'@(MsReduced _)) = MsUnreduced (ms l') x r'
-ms (MsUnreduced l' x r') = MsUnreduced l' x (ms r')
-ms r@(MsReduced _) = r
+ms :: MsTree Int -> (MsTree Int, Bool)
+ms r@(MsReduced _) = (r, False)
+ms (MsUnreduced (MsReduced l) acc (MsReduced r)) = (mergeStep l acc r, True)
+-- ms (MsUnreduced l'@(MsReduced _) x r') = MsUnreduced l' x (ms r')
+-- ms (MsUnreduced l' x r'@(MsReduced _)) = MsUnreduced (ms l') x r'
+ms (MsUnreduced l x r) = (MsUnreduced l' x r', ls || rs)
+  where (l', ls) = ms l
+        (r', rs) | ls = (r, ls)
+                 | otherwise = ms r
 
 mergeStep :: [Int] -> [Int] -> [Int] -> MsTree Int
 mergeStep [] acc [] = MsReduced acc
@@ -40,6 +47,4 @@ mergeStep [] acc (y : ys) = MsUnreduced (MsReduced []) (acc ++ [y]) (MsReduced y
 mergeStep xs'@(x : xs) acc ys'@(y : ys)
   | x < y     = MsUnreduced (MsReduced xs) (acc ++ [x]) (MsReduced ys')
   | otherwise = MsUnreduced (MsReduced xs') (acc ++ [y]) (MsReduced ys)
-
-
 

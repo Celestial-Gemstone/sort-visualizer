@@ -1,23 +1,32 @@
-module Types (ApplicationState(..), Sort(..), Resource, Tick, SortValue(..), QsTree(..)) where
+{-# LANGUAGE TemplateHaskell #-}
 
-data ApplicationState =
-  State {
-      sorts :: [Sort]
-  }
+module Types where -- (ApplicationState(..), paused, Sort(..), Resource, Tick, SortValue(..)) where
 
-data Sort = Sort {
-      current  :: [SortValue],
-      rest     :: [[SortValue]],
-      finished :: Bool
-}
+import Lens.Micro.TH
+import ListZipper
+import Graphics.Vty (Key, Modifier)
+import Brick (EventM)
+import System.Random (RandomGen, StdGen)
 
 type Resource = ()
 type Tick = ()
 
 data SortValue = SortValue {
-    value :: Int,
-    highlight :: Maybe String
+    _value :: Int,
+    _highlight :: Maybe String
     }
+makeLenses ''SortValue
 
-data QsTree a = Unreduced [a] | Reduced Bool (QsTree a) a (QsTree a)
-  deriving Show
+data Sort = Sort {
+    _values   :: ListZipper [SortValue]
+    }
+makeLenses ''Sort
+
+data ApplicationState =
+  State {
+      _sort    :: Sort,
+      _paused  :: Bool,
+      _done    :: Bool,
+      _randGen :: StdGen
+  }
+makeLenses ''ApplicationState

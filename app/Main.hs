@@ -9,50 +9,31 @@ import Brick.BChan (newBChan, BChan, writeBChan)
 import Types
 import UI (draw)
 import Control (handleEvent)
-import Brick (App (..), showFirstCursor, attrMap, attrName, fg, AttrName, customMain)
-import System.Random (randomRIO)
-import Control.Monad
-import Algorithms.Quicksort (quicksort)
-import Algorithms.SelectionSort (selectionsort)
-import Algorithms.MergeSort (mergesort)
+import Brick (App (..), showFirstCursor, attrMap, attrName, fg, AttrName, customMain, EventM)
+import System.Random (initStdGen)
+import ListZipper (ListZipper(ListZipper))
 
 application :: App ApplicationState Tick Resource
 application =
   App { appDraw = draw
       , appChooseCursor = showFirstCursor
-      , appHandleEvent  = handleEvent onTick
+      , appHandleEvent  = handleEvent
       , appStartEvent   = pure ()
       , appAttrMap = const (attrMap defAttr colors)
       }
 
-onTick :: ApplicationState -> ApplicationState
-onTick st' = State $ map foo (sorts st')
-  where foo st | finished st = st
-               | []       <- rest st = st { finished = True }
-               | (x : xs) <- rest st = st { current = x, rest = xs }
-
 colors :: [(AttrName, Attr)]
 colors = [(attrName label, fg color)
-    | (label, color) <- [("pivot", blue), ("highlight", green)]]
+    | (label, color) <- [("pivot", red), ("highlight", cyan), ("temp", magenta)]]
 
 initialState :: IO ApplicationState
-initialState = do
-  rand <- randoms 50 100
-  let sorts' = [mergesort, quicksort, selectionsort]
-  pure $ State $ map (initSort . ($ rand)) sorts'
-
-initSort :: [[SortValue]] -> Sort
-initSort [] = error "empty sort"
-initSort (x : xs) = Sort x xs False
-
-randoms :: Int -> Int -> IO [Int]
-randoms n m = replicateM m (randomRIO (1, n))
+initialState = State (Sort $ ListZipper [] [SortValue 100 Nothing] []) True False <$> initStdGen
 
 main :: IO ()
 main = do
   let app = application
-  eventChan <- newBChan 10
-  x <- forkIO (tickThread eventChan)
+  eventChan <- newBChan 1
+  x <- forkIO (tickThread 25 eventChan)
   print x
   let buildVty = mkVty defaultConfig
   initialVty <- buildVty
@@ -60,8 +41,8 @@ main = do
   _ <- customMain initialVty buildVty (Just eventChan) app st
   pure ()
 
-tickThread :: BChan Tick -> IO ()
-tickThread chan = do
+tickThread :: Int -> BChan Tick -> IO ()
+tickThread delay chan = do
   writeBChan chan ()
-  threadDelay 25000
-  tickThread chan
+  threadDelay (delay * 1000)
+  tickThread delay chan

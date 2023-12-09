@@ -1,0 +1,1 @@
+module Algorithms.Bogosort () where
