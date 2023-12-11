@@ -28,23 +28,21 @@ application =
 
 colors :: [(AttrName, Attr)]
 colors = [(attrName label, fg color)
-    | (label, color) <- [("pivot", red), ("highlight", cyan), ("temp", magenta)]]
+    | (label, color) <- [("pivot", red), ("highlight", cyan), ("temp", magenta), ("done", green)]]
 
 initialState :: IO ApplicationState
-initialState = do 
+initialState = do
   gen <- initStdGen
   tdref <- newIORef 15
   pure $ State {
             _randGen = gen
           , _sort = test
-          , _done = False
-          , _paused = True
           , _tickDelay = tdref
           }
 
 test :: Sort
-test = let (x :| xs) = mergesort [1..200]
-  in Sort (ListZipper [] x xs)
+test = let (x :| xs) = mergesort [1..150]
+  in Sort (ListZipper [] x xs) True False
 
 main :: IO ()
 main = do

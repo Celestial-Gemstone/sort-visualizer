@@ -5,7 +5,7 @@ import Brick.Types (BrickEvent (VtyEvent, AppEvent), EventM)
 import Brick (halt, get)
 
 import Types
-import Lens.Micro.Mtl ((%=), use, (.=), (+=), (-=))
+import Lens.Micro.Mtl ((%=), use, (.=), (+=), (-=), zoom)
 import ListZipper (right, left, ListZipper (ListZipper), pointer)
 import Lens.Micro ((^.))
 import Control.Monad (unless)
@@ -23,7 +23,7 @@ import Control.Monad.IO.Class (MonadIO(..))
 handleEvent :: BrickEvent Resource Tick -> EventM Resource ApplicationState ()
 handleEvent ev
   | VtyEvent ev' <- ev = handleVtyEvent ev'
-  | AppEvent ()  <- ev = flip unless (move right) =<< use paused
+  | AppEvent ()  <- ev = flip unless (move right) =<< use (sort.paused)
   | otherwise = pure ()
 
 handleVtyEvent :: Event -> EventM Resource ApplicationState ()
@@ -44,7 +44,7 @@ move f = do
 
 apply :: Maybe (ListZipper [SortValue]) -> EventM Resource ApplicationState ()
 apply (Just z) = sort.values .= z
-apply _        = done .= True
+apply _        = sort.done .= True
 
 getKeymap :: ApplicationState -> [(Key, String, EventM Resource ApplicationState ())]
 getKeymap st =
@@ -52,7 +52,7 @@ getKeymap st =
   , (KChar '+', "Increase tick delay", ggg (+10))
   , (KChar '-', "Decrease tick delay", ggg (\x -> max 0 (x - 10)))
   ] ++ conditional (not isDone)
-  [ (KChar ' ', pauseDesc, paused %= not)
+  [ (KChar ' ', pauseDesc, sort.paused %= not)
   ] ++ conditional isPaused
   [ (KRight, "forward", move right)
   , (KLeft, "backward", move left)
@@ -63,8 +63,8 @@ getKeymap st =
   , (KChar 'b', "Bogosort", startAlgorithm bogosort)
   , (KChar 's', "Shuffle", startAlgorithm (shuffleList (view randGen st)))
   ]
-  where isPaused = st ^. paused
-        isDone = st ^. done
+  where isPaused = st ^. sort.paused
+        isDone = st ^. sort.done
         pauseDesc | isPaused  = "Unpause"
                   | otherwise = "Pause"
 
@@ -75,9 +75,10 @@ ggg f = do
 
 startAlgorithm :: ([Int] -> NonEmpty [SortValue]) -> EventM Resource ApplicationState ()
 startAlgorithm f = do
-  done   .= False
-  paused .= False
-  sort.values %= useAlgorithm f
+  zoom sort $ do
+    done   .= False
+    paused .= False
+    values %= useAlgorithm f
 
 useAlgorithm :: ([Int] -> NonEmpty [SortValue]) -> ListZipper [SortValue] -> ListZipper [SortValue]
 useAlgorithm f x = let vals = view value <$> pointer x
