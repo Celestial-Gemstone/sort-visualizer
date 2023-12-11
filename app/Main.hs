@@ -41,7 +41,7 @@ initialState = do
           }
 
 test :: Sort
-test = let (x :| xs) = mergesort [1..150]
+test = let (x :| xs) = mergesort [1..50]
   in Sort (ListZipper [] x xs) True False
 
 main :: IO ()

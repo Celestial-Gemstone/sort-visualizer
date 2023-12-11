@@ -60,7 +60,7 @@ getKeymap st =
   [ (KChar 'q', "Quicksort", startAlgorithm quicksort)
   , (KChar 'm', "Mergesort", startAlgorithm mergesort)
   , (KChar 'c', "Selectionsort", startAlgorithm selectionsort)
-  , (KChar 'b', "Bogosort", startAlgorithm bogosort)
+  , (KChar 'b', "Bogosort", startAlgorithm (bogosort $ st^.randGen))
   , (KChar 's', "Shuffle", startAlgorithm (shuffleList (view randGen st)))
   ]
   where isPaused = st ^. sort.paused
