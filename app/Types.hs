@@ -4,9 +4,9 @@ module Types where -- (ApplicationState(..), paused, Sort(..), Resource, Tick, S
 
 import Lens.Micro.TH
 import ListZipper
-import Graphics.Vty (Key, Modifier)
-import Brick (EventM)
-import System.Random (RandomGen, StdGen)
+import System.Random (StdGen)
+import Control.Concurrent (MVar)
+import Data.IORef (IORef)
 
 type Resource = ()
 type Tick = ()
@@ -24,9 +24,10 @@ makeLenses ''Sort
 
 data ApplicationState =
   State {
-      _sort    :: Sort,
-      _paused  :: Bool,
-      _done    :: Bool,
-      _randGen :: StdGen
+      _sort      :: Sort,
+      _paused    :: Bool,
+      _done      :: Bool,
+      _tickDelay :: IORef Int,
+      _randGen   :: StdGen
   }
 makeLenses ''ApplicationState

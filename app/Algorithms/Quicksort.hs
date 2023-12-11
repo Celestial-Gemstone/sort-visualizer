@@ -3,7 +3,10 @@ module Algorithms.Quicksort (quicksort) where
 import Types
 import Data.List.NonEmpty (NonEmpty ((:|)))
 
-data QsTree a = Unreduced [a] | Reduced Bool (QsTree a) a (QsTree a) | Reducing [a] (a, [a]) [a]
+data QsTree a
+  = Unreduced [a]
+  | Reduced Bool (QsTree a) a (QsTree a)
+  | Reducing [a] (a, [a]) [a]
   deriving Show
 
 quicksort :: [Int] -> NonEmpty [SortValue]

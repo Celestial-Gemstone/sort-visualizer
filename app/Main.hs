@@ -14,6 +14,8 @@ import System.Random (initStdGen)
 import ListZipper (ListZipper(ListZipper))
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Algorithms.MergeSort (mergesort)
+import Lens.Micro ((^.))
+import Data.IORef (newIORef, IORef, readIORef)
 
 application :: App ApplicationState Tick Resource
 application =
@@ -29,26 +31,35 @@ colors = [(attrName label, fg color)
     | (label, color) <- [("pivot", red), ("highlight", cyan), ("temp", magenta)]]
 
 initialState :: IO ApplicationState
-initialState = State test True False <$> initStdGen
+initialState = do 
+  gen <- initStdGen
+  tdref <- newIORef 15
+  pure $ State {
+            _randGen = gen
+          , _sort = test
+          , _done = False
+          , _paused = True
+          , _tickDelay = tdref
+          }
 
 test :: Sort
-test = let (x :| xs) = mergesort [1..150]
-  in Sort $ ListZipper [] x xs
+test = let (x :| xs) = mergesort [1..200]
+  in Sort (ListZipper [] x xs)
 
 main :: IO ()
 main = do
   let app = application
   eventChan <- newBChan 1
-  x <- forkIO (tickThread 15 eventChan)
-  print x
+  st <- initialState
+  _ <- forkIO (tickThread (st^.tickDelay) eventChan)
   let buildVty = mkVty defaultConfig
   initialVty <- buildVty
-  st <- initialState
   _ <- customMain initialVty buildVty (Just eventChan) app st
   pure ()
 
-tickThread :: Int -> BChan Tick -> IO ()
-tickThread delay chan = do
+tickThread :: IORef Int -> BChan Tick -> IO ()
+tickThread td chan = do
   writeBChan chan ()
-  threadDelay (delay * 1000)
-  tickThread delay chan
+  val <- readIORef td
+  threadDelay (val * 1000)
+  tickThread td chan

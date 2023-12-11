@@ -12,3 +12,6 @@ right (ListZipper ls x (r : rs)) = Just $ ListZipper (x : ls) r rs
 
 pointer :: ListZipper a -> a
 pointer (ListZipper _ x _) = x
+
+toList :: ListZipper a -> [a]
+toList (ListZipper l x r) = l ++ (x : r)

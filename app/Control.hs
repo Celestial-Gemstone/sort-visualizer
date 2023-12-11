@@ -5,7 +5,7 @@ import Brick.Types (BrickEvent (VtyEvent, AppEvent), EventM)
 import Brick (halt, get)
 
 import Types
-import Lens.Micro.Mtl ((%=), use, (.=))
+import Lens.Micro.Mtl ((%=), use, (.=), (+=), (-=))
 import ListZipper (right, left, ListZipper (ListZipper), pointer)
 import Lens.Micro ((^.))
 import Control.Monad (unless)
@@ -17,13 +17,14 @@ import Algorithms.Shuffle (shuffleList)
 import Algorithms.MergeSort (mergesort)
 import Algorithms.SelectionSort (selectionsort)
 import Algorithms.Bogosort (bogosort)
+import Data.IORef (atomicModifyIORef)
+import Control.Monad.IO.Class (MonadIO(..))
 
 handleEvent :: BrickEvent Resource Tick -> EventM Resource ApplicationState ()
 handleEvent ev
   | VtyEvent ev' <- ev = handleVtyEvent ev'
   | AppEvent ()  <- ev = flip unless (move right) =<< use paused
   | otherwise = pure ()
-
 
 handleVtyEvent :: Event -> EventM Resource ApplicationState ()
 handleVtyEvent (EvKey key mods) = handleKey key mods
@@ -48,6 +49,8 @@ apply _        = done .= True
 getKeymap :: ApplicationState -> [(Key, String, EventM Resource ApplicationState ())]
 getKeymap st =
   [ (KEsc, "Quit", halt)
+  , (KChar '+', "Increase tick delay", ggg (+10))
+  , (KChar '-', "Decrease tick delay", ggg (\x -> max 0 (x - 10)))
   ] ++ conditional (not isDone)
   [ (KChar ' ', pauseDesc, paused %= not)
   ] ++ conditional isPaused
@@ -64,6 +67,11 @@ getKeymap st =
         isDone = st ^. done
         pauseDesc | isPaused  = "Unpause"
                   | otherwise = "Pause"
+
+ggg :: (Int -> Int) -> EventM Resource ApplicationState ()
+ggg f = do
+  td <- use tickDelay
+  liftIO $ atomicModifyIORef td (\x -> (f x, ()))
 
 startAlgorithm :: ([Int] -> NonEmpty [SortValue]) -> EventM Resource ApplicationState ()
 startAlgorithm f = do

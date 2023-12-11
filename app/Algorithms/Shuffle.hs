@@ -19,8 +19,7 @@ shuffle g d = collect d : rec
             | otherwise = shuffle g' r
 
 collect :: ShuffleData Int -> [SortValue]
-collect (ShuffleData [] ys) = collectValues Nothing ys
-collect (ShuffleData (x : xs) ys) = [SortValue x (Just "pivot")] ++ collectValues Nothing xs ++ collectValues (Just "highlight") ys
+collect (ShuffleData xs ys) = collectValues Nothing xs ++ collectValues (Just "highlight") ys
 
 collectValues :: Maybe String -> [Int] -> [SortValue]
 collectValues hl = map (`SortValue` hl)
